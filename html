@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Habit Tracker</title>
+  <!-- Load Icons and Excel Sheet Libraries -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --bg: #EDF1EA; --card: #FFFFFF; --text: #2B3A55; --muted: #7A8699; --border: #DDE3DE; --subtle: #F0F2ED; --accent: #D9A441;
+    }
+    [data-theme="dark"] {
+      --bg: #1B2333; --card: #263045; --text: #EDF1EA; --muted: #9AA6B8; --border: #3A4560; --subtle: #2E3A52;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif; padding: 28px 20px 40px; transition: background 0.2s, color 0.2s;
+    }
+    .fraunces { font-family: 'Fraunces', serif; }
+    
+    /* Container expands on desktop for prettier cards */
+    .container { max-width: 480px; margin: 0 auto; transition: max-width 0.3s ease; }
+    
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+    
+    /* Grid changes from 1-2 columns mobile to 3 columns desktop */
+    .tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; transition: transform 0.2s; }
+    .card:hover { transform: translateY(-2px); }
+    .card-full { grid-column: 1 / -1; }
+    .card-header { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .card-value { font-size: 22px; font-weight: 700; margin: 6px 0 2px; }
+    .card-subtext { font-size: 13px; font-weight: 500; color: var(--muted); }
+    
+    .btn-row { display: flex; gap: 6px; margin-top: 8px; }
+    .icon-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); padding: 0; }
+    
+    input[type="range"] { width: 100%; margin-top: 10px; accent-color: var(--accent); }
+    .text-input, textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; }
+    .text-input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    
+    .spend-input { border: none; border-bottom: 1px solid var(--border); background: transparent; font-size: 20px; font-weight: 700; width: 100px; color: var(--text); outline: none; }
+    
+    /* Step Tracker Progress Bar */
+    progress { width: 100%; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    progress::-webkit-progress-bar { background-color: var(--subtle); }
+    progress::-webkit-progress-value { background-color: var(--accent); }
+    
+    .theme-picker { position: absolute; right: 0; top: 42px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; width: 190px; z-index: 10; box-shadow: 0 6px 20px rgba(0,0,0,0.12); display: none; }
+    
+    /* Desktop Responsive Styling */
+    @media (min-width: 768px) {
+      .container { max-width: 800px; }
+      .tracker-grid { grid-template-columns: repeat(3, 1fr); }
+      .card-full { grid-column: span 3; }
+      .card-half-desktop { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header-row">
+      <div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;" id="date-display"></div>
+        <h1 class="fraunces" style="font-size: 27px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="sparkles" id="title-icon" style="color: var(--accent);"></i> Today's Page
+        </h1>
+      </div>
+      <div style="position: relative;">
+        <button onclick="toggleThemePicker()" style="display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer;">
+          <i data-lucide="palette" style="color: var(--muted); width: 15px; height: 15px;"></i>
+        </button>
+        <div class="theme-picker" id="theme-picker">
+          <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+            <button onclick="setTheme('light')" style="flex: 1; padding: 7px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text);">Light</button>
+            <button onclick="setTheme('dark')" style="flex: 1; padding: 7px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text);">Dark</button>
+          </div>
+          <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">Accent colour</div>
+          <input type="color" id="accent-color" onchange="setAccent(this.value)" style="width: 100%; height: 32px; border: none; cursor: pointer; background: none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracker grid -->
+    <div class="tracker-grid">
+      <!-- Water (Derived from React Source) -->
+      <div class="card card-half-desktop">
+        <div class="card-header"><i data-lucide="droplet" style="color: #3A6EA5;"></i> Water</div>
+        <div class="card-value"><span id="water-val">0</span><span class="card-subtext"> / 8 glasses</span></div>
+        <div class="btn-row">
+          <button class="icon-btn" onclick="updateState('water', -1)"><i data-lucide="minus" style="width: 14px;"></i></button>
+          <button class="icon-btn" onclick="updateState('water', 1)"><i data-lucide="plus" style="width: 14px;"></i></button>
+        </div>
+      </div>
+
+      <!-- Sleep (Derived from React Source) -->
+      <div class="card card-half-desktop">
+        <div class="card-header"><i data-lucide="moon" style="color: #6B5CA5;"></i> Sleep</div>
+        <div class="card-value"><span id="sleep-val">0</span><span class="card-subtext"> hrs</span></div>
+        <input type="range" id="sleep-range" min="0" max="12" step="0.5" oninput="updateRange('sleep', this.value)">
+      </div>
+
+      <!-- Study Time (Derived from React Source) -->
+      <div class="card card-half-desktop">
+        <div class="card-header"><i data-lucide="book-open" style="color: #8A6D3B;"></i> Study time</div>
+        <div class="card-value"><span id="studyHrs-val">0</span><span class="card-subtext"> hrs</span></div>
+        <input type="range" id="studyHrs-range" min="0" max="10" step="0.5" oninput="updateRange('studyHrs', this.value)">
+      </div>
+
+      <!-- Screen Time (Derived from React Source) -->
+      <div class="card card-half-desktop">
+        <div class="card-header"><span>📱</span> Screen time</div>
+        <div class="card-value"><span id="screenHrs-val">0</span><span class="card-subtext"> hrs</span></div>
+        <input type="range" id="screenHrs-range" min="0" max="14" step="0.5" oninput="updateRange('screenHrs', this.value)">
+      </div>
+
+      <!-- NEW: Step Count -->
+      <div class="card card-half-desktop">
+        <div class="card-header"><i data-lucide="footprints" style="color: #5A8A5F;"></i> Daily Steps</div>
+        <div style="display: flex; align-items: center; margin-top: 4px;">
+          <input type="number" id="steps-input" class="text-input" placeholder="0" oninput="updateSteps(this.value)" style="width: 100px; font-weight: 700; font-size: 18px;">
+          <span class="card-subtext" style="margin-left: 8px;">/ 10,000</span>
+        </div>
+        <progress id="steps-progress" value="0" max="10000"></progress>
+      </div>
+
+      <!-- Spend (Derived from React Source) -->
+      <div class="card card-half-desktop">
+        <div class="card-header"><i data-lucide="wallet" style="color: #C75146;"></i> Spent today</div>
+        <div style="display: flex; align-items: center; margin-top: 8px;">
+          <span style="font-size: 20px; font-weight: 700; margin-right: 4px;">₹</span>
+          <input type="number" id="spend-input" class="spend-input" placeholder="0" oninput="updateInput('spend', this.value)">
+        </div>
+      </div>
+
+      <!-- Mood (Derived from React Source) -->
+      <div class="card card-full">
+        <div class="card-header"><i data-lucide="smile" style="color: #7C9473;"></i> Mood</div>
+        <div style="display: flex; gap: 10px; margin-top: 8px;" id="mood-container"></div>
+      </div>
+
+      <!-- Rate the Day (Derived from React Source) -->
+      <div class="card card-full">
+        <div class="card-header"><span>⭐</span> Rate the day</div>
+        <div class="card-value"><span id="dayRating-val">—</span><span class="card-subtext"> / 10</span></div>
+        <input type="range" id="dayRating-range" min="1" max="10" step="1" oninput="updateRange('dayRating', this.value)">
+      </div>
+
+      <!-- Note (Derived from React Source) -->
+      <div class="card card-full">
+        <div class="card-header"><span>📝</span> Today, in a sentence</div>
+        <textarea id="note-input" rows="2" placeholder="One or two lines about how today actually went..." oninput="updateInput('note', this.value)"></textarea>
+      </div>
+    </div>
+
+    <!-- Save Button (Derived from React Source) -->
+    <button onclick="saveAndExport()" id="save-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px;">
+      <i data-lucide="download" style="width: 16px;"></i> Save today & update Excel
+    </button>
+  </div>
+
+  <script>
+    // App State mapped from original React state[cite: 2]
+    const MOODS = ["😞", "😐", "🙂", "😄"];
+    let state = {
+      water: 0, sleep: 0, studyHrs: 0, screenHrs: 0, spend: "", 
+      steps: 0, mood: null, dayRating: null, note: "",
+      theme: "light", accent: "#D9A441"
+    };
+
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    function init() {
+      lucide.createIcons();
+      document.getElementById("date-display").innerText = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+      
+      // Load saved preferences and today's data replacing window.storage with localStorage[cite: 2]
+      const savedTheme = JSON.parse(localStorage.getItem("prefs:theme") || "{}");
+      if(savedTheme.mode) setTheme(savedTheme.mode, false);
+      if(savedTheme.accent) setAccent(savedTheme.accent, false);
+
+      const savedData = JSON.parse(localStorage.getItem(`entries:${todayKey}`) || "{}");
+      state = { ...state, ...savedData };
+      
+      render();
+      renderMoods();
+    }
+
+    function render() {
+      document.getElementById("water-val").innerText = state.water;
+      document.getElementById("sleep-val").innerText = state.sleep;
+      document.getElementById("sleep-range").value = state.sleep;
+      document.getElementById("studyHrs-val").innerText = state.studyHrs;
+      document.getElementById("studyHrs-range").value = state.studyHrs;
+      document.getElementById("screenHrs-val").innerText = state.screenHrs;
+      document.getElementById("screenHrs-range").value = state.screenHrs;
+      document.getElementById("spend-input").value = state.spend;
+      document.getElementById("steps-input").value = state.steps || "";
+      document.getElementById("steps-progress").value = state.steps || 0;
+      document.getElementById("dayRating-val").innerText = state.dayRating ?? "—";
+      document.getElementById("dayRating-range").value = state.dayRating ?? 5;
+      document.getElementById("note-input").value = state.note;
+    }
+
+    function renderMoods() {
+      const container = document.getElementById("mood-container");
+      container.innerHTML = "";
+      MOODS.forEach((m, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = m;
+        btn.style.cssText = `font-size: 22px; width: 42px; height: 42px; border-radius: 10px; cursor: pointer; border: ${state.mood === i ? '2px solid var(--accent)' : '1px solid var(--border)'}; background: ${state.mood === i ? 'var(--subtle)' : 'var(--card)'}; opacity: ${state.mood === null || state.mood === i ? 1 : 0.55};`;
+        btn.onclick = () => { state.mood = i; renderMoods(); };
+        container.appendChild(btn);
+      });
+    }
+
+    function updateState(key, change) {
+      state[key] = Math.max(0, (state[key] || 0) + change);
+      render();
+    }
+
+    function updateRange(key, value) {
+      state[key] = parseFloat(value);
+      render();
+    }
+
+    function updateInput(key, value) {
+      state[key] = value;
+      render();
+    }
+
+    function updateSteps(value) {
+      state.steps = parseInt(value) || 0;
+      document.getElementById("steps-progress").value = state.steps;
+    }
+
+    function toggleThemePicker() {
+      const p = document.getElementById("theme-picker");
+      p.style.display = p.style.display === "block" ? "none" : "block";
+    }
+
+    function setTheme(mode, save = true) {
+      state.theme = mode;
+      document.body.setAttribute("data-theme", mode);
+      if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
+    }
+
+    function setAccent(color, save = true) {
+      state.accent = color;
+      document.documentElement.style.setProperty("--accent", color);
+      document.getElementById("accent-color").value = color;
+      document.getElementById("title-icon").style.color = color;
+      if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
+      renderMoods();
+    }
+
+    // Save and Excel export logic ported from React[cite: 2]
+    function saveAndExport() {
+      const btn = document.getElementById("save-btn");
+      btn.innerHTML = "Saving...";
+      
+      const payload = { ...state, date: todayKey };
+      localStorage.setItem(`entries:${todayKey}`, JSON.stringify(payload));
+
+      setTimeout(() => {
+        buildExcel();
+        btn.innerHTML = `<i data-lucide="check" style="width: 16px;"></i> Saved to Excel`;
+        lucide.createIcons();
+        setTimeout(() => {
+          btn.innerHTML = `<i data-lucide="download" style="width: 16px;"></i> Save today & update Excel`;
+          lucide.createIcons();
+        }, 2200);
+      }, 500);
+    }
+
+    function buildExcel() {
+      const rows = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith("entries:")) {
+          const d = JSON.parse(localStorage.getItem(key));
+          rows.push({
+            Date: d.date,
+            "Water (glasses)": d.water,
+            "Sleep (hrs)": d.sleep,
+            "Steps": d.steps || 0,
+            "Spent (₹)": d.spend,
+            "Study (hrs)": d.studyHrs,
+            "Screen time (hrs)": d.screenHrs,
+            "Mood": d.mood != null ? MOODS[d.mood] : "",
+            "Day rating (/10)": d.dayRating ?? "",
+            "Note": d.note ?? ""
+          });
+        }
+      }
+      rows.sort((a, b) => (a.Date > b.Date ? 1 : -1));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Habit Log");
+      XLSX.writeFile(wb, "habit-tracker-log.xlsx");
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
