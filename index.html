@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Echo | Habit Tracker</title>
+  <title>Echo | Student Habit Tracker</title>
   
   <link rel="icon" type="image/png" href="logo.png">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -31,10 +31,16 @@
     .fraunces { font-family: 'Fraunces', serif; }
     
     .container { max-width: 480px; margin: 0 auto; transition: max-width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+    
+    /* Fixed Header Layout */
+    .header-row { 
+      display: flex; justify-content: space-between; align-items: center; 
+      gap: 16px; margin-bottom: 24px; position: relative;
+    }
+    .header-text-container { flex: 1; min-width: 0; }
+    
     .tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     
-    /* Staggered Card Entrance & Hover Physics */
     @keyframes slideUp { 
       0% { opacity: 0; transform: translateY(30px) scale(0.95); } 
       100% { opacity: 1; transform: translateY(0) scale(1); } 
@@ -60,7 +66,6 @@
     
     .card-full { grid-column: 1 / -1; }
     
-    /* Icon Hover Animations */
     .card-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
     .card-header i { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .card:hover .card-header i { transform: scale(1.25) rotate(8deg); }
@@ -68,18 +73,16 @@
     .card-value { font-size: 24px; font-weight: 700; margin: 6px 0 2px; transition: color 0.3s ease; }
     .card-subtext { font-size: 13px; font-weight: 500; color: var(--muted); }
     
-    /* Button Micro-interactions */
     .btn-row { display: flex; gap: 8px; margin-top: 10px; }
     .icon-btn { 
       width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border); 
       background: var(--subtle); display: flex; align-items: center; justify-content: center; 
-      cursor: pointer; color: var(--text); padding: 0;
+      cursor: pointer; color: var(--text); padding: 0; flex-shrink: 0;
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     }
     .icon-btn:hover { transform: scale(1.15); background: var(--card); border-color: var(--accent); color: var(--accent); }
     .icon-btn:active { transform: scale(0.9); }
     
-    /* Range & Input Glowing Focus States */
     input[type="range"] { width: 100%; margin-top: 10px; accent-color: var(--accent); transition: transform 0.2s; cursor: pointer; }
     input[type="range"]:active { transform: scale(1.02); }
     
@@ -95,11 +98,9 @@
     }
     .spend-input:focus { box-shadow: none; border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
     
-    /* Animated Progress Bar */
     .progress-track { width: 100%; height: 8px; background: var(--subtle); border-radius: 6px; overflow: hidden; margin-top: 12px; }
     .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); }
     
-    /* Mood Button Animations */
     .mood-btn {
       font-size: 24px; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; 
       display: flex; align-items: center; justify-content: center;
@@ -112,7 +113,6 @@
     .mood-btn.unselected { border: 1px solid var(--border); background: var(--card); opacity: 0.4; }
     .mood-btn.unselected:hover { opacity: 0.8; transform: scale(1.05); }
 
-    /* Primary Save Button */
     .primary-btn {
       background: var(--accent); color: #fff; border: none; border-radius: 14px; padding: 14px 28px; 
       font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; 
@@ -123,13 +123,16 @@
     .primary-btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 32px rgba(217, 164, 65, 0.4); }
     .primary-btn:active { transform: scale(0.95); box-shadow: 0 4px 12px rgba(217, 164, 65, 0.2); }
     
-    .theme-picker { position: absolute; right: 0; top: 42px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; width: 200px; z-index: 10; box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(-10px); pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .theme-picker { 
+      position: absolute; right: 0; top: 56px; background: var(--card); border: 1px solid var(--border); 
+      border-radius: 16px; padding: 16px; width: 200px; z-index: 10; box-shadow: var(--shadow-lg); 
+      opacity: 0; transform: translateY(-10px); pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
     .theme-picker.active { opacity: 1; transform: translateY(0); pointer-events: all; }
     
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Modal Animation */
     .overlay-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
@@ -169,11 +172,11 @@
 </head>
 <body>
 
-  <!-- Animated Save Modal -->
   <div class="overlay-backdrop" id="overlay-backdrop"></div>
   <div class="save-modal" id="save-modal">
     <img src="logo.jpg" alt="Echo Logo" id="modal-logo">
-    <h2 class="fraunces"> Safely Echoed❤️</h2>
+    <h2 class="fraunces">Loud & Clear</h2>
+    <p>Your daily progress has been safely echoed into your tracking log.</p>
   </div>
 
   <div class="container">
@@ -182,12 +185,13 @@
     </div>
 
     <div class="header-row" style="animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
-      <div>
+      <div class="header-text-container">
         <div style="font-size: 14px; color: var(--muted); margin-bottom: 6px; font-weight: 500;" id="date-display"></div>
-        <h1 class="fraunces" style="font-size: 32px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
-          <i data-lucide="sparkles" id="title-icon" style="color: var(--accent); width: 28px; height: 28px; transition: transform 0.5s;"></i> Today's Page
+        <h1 class="fraunces" style="font-size: 32px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          <i data-lucide="sparkles" id="title-icon" style="color: var(--accent); width: 28px; height: 28px; transition: transform 0.5s; flex-shrink: 0;"></i> Today's Page
         </h1>
       </div>
+      
       <div style="position: relative;">
         <button onclick="toggleThemePicker()" class="icon-btn" style="width: 44px; height: 44px; border-radius: 14px;">
           <i data-lucide="palette" style="color: var(--text); width: 20px; height: 20px;"></i>
@@ -296,10 +300,8 @@
       render();
       renderMoods();
       
-      // Initial trigger for progress bar animation
       setTimeout(() => updateSteps(state.steps || 0), 300);
       
-      // Title Icon gentle rotate
       setInterval(() => {
         const icon = document.getElementById("title-icon");
         icon.style.transform = icon.style.transform === "rotate(15deg) scale(1.1)" ? "rotate(0deg) scale(1)" : "rotate(15deg) scale(1.1)";
@@ -327,12 +329,8 @@
       MOODS.forEach((m, i) => {
         const btn = document.createElement("button");
         btn.innerText = m;
-        // Apply smooth transition classes instead of inline styles
         btn.className = `mood-btn ${state.mood === i ? 'selected' : (state.mood === null ? '' : 'unselected')}`;
-        btn.onclick = () => { 
-          state.mood = i; 
-          renderMoods(); 
-        };
+        btn.onclick = () => { state.mood = i; renderMoods(); };
         container.appendChild(btn);
       });
     }
@@ -352,7 +350,6 @@
       p.classList.toggle("active");
     }
 
-    // Close picker when clicking outside
     document.addEventListener('click', function(event) {
       const picker = document.getElementById("theme-picker");
       const btn = picker.previousElementSibling;
