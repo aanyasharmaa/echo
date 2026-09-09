@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Habit Tracker</title>
-  <!-- Load Icons and Excel Sheet Libraries -->
+  <title>Echo | Habit Tracker</title>
+  
+  <!-- Updated to logo.jpg -->
+  <link rel="icon" type="image/jpg" href="logo.jpg">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
     
@@ -24,12 +27,8 @@
     }
     .fraunces { font-family: 'Fraunces', serif; }
     
-    /* Container expands on desktop for prettier cards */
     .container { max-width: 480px; margin: 0 auto; transition: max-width 0.3s ease; }
-    
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
-    
-    /* Grid changes from 1-2 columns mobile to 3 columns desktop */
     .tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; transition: transform 0.2s; }
@@ -45,17 +44,47 @@
     input[type="range"] { width: 100%; margin-top: 10px; accent-color: var(--accent); }
     .text-input, textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; }
     .text-input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-    
     .spend-input { border: none; border-bottom: 1px solid var(--border); background: transparent; font-size: 20px; font-weight: 700; width: 100px; color: var(--text); outline: none; }
     
-    /* Step Tracker Progress Bar */
     progress { width: 100%; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
     progress::-webkit-progress-bar { background-color: var(--subtle); }
     progress::-webkit-progress-value { background-color: var(--accent); }
     
     .theme-picker { position: absolute; right: 0; top: 42px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; width: 190px; z-index: 10; box-shadow: 0 6px 20px rgba(0,0,0,0.12); display: none; }
     
-    /* Desktop Responsive Styling */
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Bulletproof Modal Styles */
+    .overlay-backdrop {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
+      z-index: 9998; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0.3s;
+    }
+    .overlay-backdrop.active { visibility: visible; opacity: 1; }
+
+    .save-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -40%) scale(0.95);
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 36px 24px; z-index: 9999; display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 85%; max-width: 340px;
+      visibility: hidden; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .save-modal.active { visibility: visible; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    
+    .save-modal img { 
+      width: 64px; height: 64px; object-fit: contain; margin-bottom: 20px; border-radius: 12px;
+      animation: echoPulse 1.5s infinite; background: var(--bg);
+    }
+    .save-modal h2 { font-size: 24px; margin: 0; color: var(--text); text-align: center; }
+    .save-modal p { font-size: 14px; color: var(--muted); margin-top: 10px; text-align: center; line-height: 1.4; }
+
+    @keyframes echoPulse {
+      0% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.6); }
+      70% { box-shadow: 0 0 0 20px rgba(217, 164, 65, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
+    }
+
     @media (min-width: 768px) {
       .container { max-width: 800px; }
       .tracker-grid { grid-template-columns: repeat(3, 1fr); }
@@ -66,8 +95,18 @@
 </head>
 <body>
 
+  <!-- Animated Save Modal -->
+  <div class="overlay-backdrop" id="overlay-backdrop"></div>
+  <div class="save-modal" id="save-modal">
+    <img src="logo.jpg" alt="Echo Logo" id="modal-logo">
+    <h2 class="fraunces">Safely echoed ❤️</h2>
+  </div>
+
   <div class="container">
-    <!-- Header -->
+    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+      <img src="logo.jpg" alt="Echo Brand Logo" style="height: 48px; object-fit: contain;">
+    </div>
+
     <div class="header-row">
       <div>
         <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;" id="date-display"></div>
@@ -90,9 +129,7 @@
       </div>
     </div>
 
-    <!-- Tracker grid -->
     <div class="tracker-grid">
-      <!-- Water (Derived from React Source) -->
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="droplet" style="color: #3A6EA5;"></i> Water</div>
         <div class="card-value"><span id="water-val">0</span><span class="card-subtext"> / 8 glasses</span></div>
@@ -102,28 +139,24 @@
         </div>
       </div>
 
-      <!-- Sleep (Derived from React Source) -->
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="moon" style="color: #6B5CA5;"></i> Sleep</div>
         <div class="card-value"><span id="sleep-val">0</span><span class="card-subtext"> hrs</span></div>
         <input type="range" id="sleep-range" min="0" max="12" step="0.5" oninput="updateRange('sleep', this.value)">
       </div>
 
-      <!-- Study Time (Derived from React Source) -->
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="book-open" style="color: #8A6D3B;"></i> Study time</div>
         <div class="card-value"><span id="studyHrs-val">0</span><span class="card-subtext"> hrs</span></div>
         <input type="range" id="studyHrs-range" min="0" max="10" step="0.5" oninput="updateRange('studyHrs', this.value)">
       </div>
 
-      <!-- Screen Time (Derived from React Source) -->
       <div class="card card-half-desktop">
         <div class="card-header"><span>📱</span> Screen time</div>
         <div class="card-value"><span id="screenHrs-val">0</span><span class="card-subtext"> hrs</span></div>
         <input type="range" id="screenHrs-range" min="0" max="14" step="0.5" oninput="updateRange('screenHrs', this.value)">
       </div>
 
-      <!-- NEW: Step Count -->
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="footprints" style="color: #5A8A5F;"></i> Daily Steps</div>
         <div style="display: flex; align-items: center; margin-top: 4px;">
@@ -133,7 +166,6 @@
         <progress id="steps-progress" value="0" max="10000"></progress>
       </div>
 
-      <!-- Spend (Derived from React Source) -->
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="wallet" style="color: #C75146;"></i> Spent today</div>
         <div style="display: flex; align-items: center; margin-top: 8px;">
@@ -142,34 +174,29 @@
         </div>
       </div>
 
-      <!-- Mood (Derived from React Source) -->
       <div class="card card-full">
         <div class="card-header"><i data-lucide="smile" style="color: #7C9473;"></i> Mood</div>
         <div style="display: flex; gap: 10px; margin-top: 8px;" id="mood-container"></div>
       </div>
 
-      <!-- Rate the Day (Derived from React Source) -->
       <div class="card card-full">
         <div class="card-header"><span>⭐</span> Rate the day</div>
         <div class="card-value"><span id="dayRating-val">—</span><span class="card-subtext"> / 10</span></div>
         <input type="range" id="dayRating-range" min="1" max="10" step="1" oninput="updateRange('dayRating', this.value)">
       </div>
 
-      <!-- Note (Derived from React Source) -->
       <div class="card card-full">
         <div class="card-header"><span>📝</span> Today, in a sentence</div>
         <textarea id="note-input" rows="2" placeholder="One or two lines about how today actually went..." oninput="updateInput('note', this.value)"></textarea>
       </div>
     </div>
 
-    <!-- Save Button (Derived from React Source) -->
-    <button onclick="saveAndExport()" id="save-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px;">
+    <button onclick="saveAndExport()" id="save-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; transition: background 0.2s;">
       <i data-lucide="download" style="width: 16px;"></i> Save today & update Excel
     </button>
   </div>
 
   <script>
-    // App State mapped from original React state[cite: 2]
     const MOODS = ["😞", "😐", "🙂", "😄"];
     let state = {
       water: 0, sleep: 0, studyHrs: 0, screenHrs: 0, spend: "", 
@@ -183,7 +210,6 @@
       lucide.createIcons();
       document.getElementById("date-display").innerText = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
       
-      // Load saved preferences and today's data replacing window.storage with localStorage[cite: 2]
       const savedTheme = JSON.parse(localStorage.getItem("prefs:theme") || "{}");
       if(savedTheme.mode) setTheme(savedTheme.mode, false);
       if(savedTheme.accent) setAccent(savedTheme.accent, false);
@@ -223,25 +249,10 @@
       });
     }
 
-    function updateState(key, change) {
-      state[key] = Math.max(0, (state[key] || 0) + change);
-      render();
-    }
-
-    function updateRange(key, value) {
-      state[key] = parseFloat(value);
-      render();
-    }
-
-    function updateInput(key, value) {
-      state[key] = value;
-      render();
-    }
-
-    function updateSteps(value) {
-      state.steps = parseInt(value) || 0;
-      document.getElementById("steps-progress").value = state.steps;
-    }
+    function updateState(key, change) { state[key] = Math.max(0, (state[key] || 0) + change); render(); }
+    function updateRange(key, value) { state[key] = parseFloat(value); render(); }
+    function updateInput(key, value) { state[key] = value; render(); }
+    function updateSteps(value) { state.steps = parseInt(value) || 0; document.getElementById("steps-progress").value = state.steps; }
 
     function toggleThemePicker() {
       const p = document.getElementById("theme-picker");
@@ -259,27 +270,48 @@
       document.documentElement.style.setProperty("--accent", color);
       document.getElementById("accent-color").value = color;
       document.getElementById("title-icon").style.color = color;
+      
+      const rgb = hexToRgb(color);
+      if (rgb) {
+        document.styleSheets[0].insertRule(`@keyframes echoPulse { 0% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } 100% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } }`, document.styleSheets[0].cssRules.length);
+      }
+      
       if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
       renderMoods();
     }
 
-    // Save and Excel export logic ported from React[cite: 2]
+    function hexToRgb(hex) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+    }
+
     function saveAndExport() {
       const btn = document.getElementById("save-btn");
-      btn.innerHTML = "Saving...";
+      btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width: 16px;"></i> Echoing...`;
+      lucide.createIcons();
       
       const payload = { ...state, date: todayKey };
       localStorage.setItem(`entries:${todayKey}`, JSON.stringify(payload));
 
-      setTimeout(() => {
-        buildExcel();
-        btn.innerHTML = `<i data-lucide="check" style="width: 16px;"></i> Saved to Excel`;
-        lucide.createIcons();
+      const backdrop = document.getElementById("overlay-backdrop");
+      const modal = document.getElementById("save-modal");
+      
+      // Force DOM to update the animation BEFORE freezing to build Excel
+      requestAnimationFrame(() => {
+        backdrop.classList.add("active");
+        modal.classList.add("active");
+        
         setTimeout(() => {
-          btn.innerHTML = `<i data-lucide="download" style="width: 16px;"></i> Save today & update Excel`;
-          lucide.createIcons();
-        }, 2200);
-      }, 500);
+          buildExcel(); // Generates and downloads the file
+          
+          setTimeout(() => {
+            backdrop.classList.remove("active");
+            modal.classList.remove("active");
+            btn.innerHTML = `<i data-lucide="download" style="width: 16px;"></i> Save today & update Excel`;
+            lucide.createIcons();
+          }, 1200); // Close modal after 1.2s
+        }, 1000); // Let modal pulse for 1s before Excel build
+      });
     }
 
     function buildExcel() {
@@ -301,12 +333,12 @@
             "Note": d.note ?? ""
           });
         }
-      } 
+      }
       rows.sort((a, b) => (a.Date > b.Date ? 1 : -1));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Habit Log");
-      XLSX.writeFile(wb, "habit-tracker-log.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "Echo Log");
+      XLSX.writeFile(wb, "echo-habit-log.xlsx");
     }
 
     window.onload = init;
