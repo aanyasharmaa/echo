@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Echo | Habit Tracker</title>
+  <title>Echo | Student Habit Tracker</title>
   
   <link rel="icon" type="image/png" href="logo.png">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -14,79 +14,154 @@
     
     :root {
       --bg: #EDF1EA; --card: #FFFFFF; --text: #2B3A55; --muted: #7A8699; --border: #DDE3DE; --subtle: #F0F2ED; --accent: #D9A441;
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
     }
     [data-theme="dark"] {
       --bg: #1B2333; --card: #263045; --text: #EDF1EA; --muted: #9AA6B8; --border: #3A4560; --subtle: #2E3A52;
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.2);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.4);
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-      font-family: 'Inter', sans-serif; padding: 28px 20px 40px; transition: background 0.2s, color 0.2s;
+      font-family: 'Inter', sans-serif; padding: 28px 20px 40px; transition: background 0.4s ease, color 0.4s ease;
     }
     .fraunces { font-family: 'Fraunces', serif; }
     
-    .container { max-width: 480px; margin: 0 auto; transition: max-width 0.3s ease; }
+    .container { max-width: 480px; margin: 0 auto; transition: max-width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
     .tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; transition: transform 0.2s; }
-    .card:hover { transform: translateY(-2px); }
+    /* Staggered Card Entrance & Hover Physics */
+    @keyframes slideUp { 
+      0% { opacity: 0; transform: translateY(30px) scale(0.95); } 
+      100% { opacity: 1; transform: translateY(0) scale(1); } 
+    }
+    
+    .card { 
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; 
+      box-shadow: var(--shadow-sm); opacity: 0;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.3s ease; 
+    }
+    .card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+    
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.10s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.20s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+    .card:nth-child(6) { animation-delay: 0.30s; }
+    .card:nth-child(7) { animation-delay: 0.35s; }
+    .card:nth-child(8) { animation-delay: 0.40s; }
+    .card:nth-child(9) { animation-delay: 0.45s; }
+    
     .card-full { grid-column: 1 / -1; }
-    .card-header { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
-    .card-value { font-size: 22px; font-weight: 700; margin: 6px 0 2px; }
+    
+    /* Icon Hover Animations */
+    .card-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .card-header i { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .card:hover .card-header i { transform: scale(1.25) rotate(8deg); }
+    
+    .card-value { font-size: 24px; font-weight: 700; margin: 6px 0 2px; transition: color 0.3s ease; }
     .card-subtext { font-size: 13px; font-weight: 500; color: var(--muted); }
     
-    .btn-row { display: flex; gap: 6px; margin-top: 8px; }
-    .icon-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); padding: 0; }
+    /* Button Micro-interactions */
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    .icon-btn { 
+      width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border); 
+      background: var(--subtle); display: flex; align-items: center; justify-content: center; 
+      cursor: pointer; color: var(--text); padding: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    .icon-btn:hover { transform: scale(1.15); background: var(--card); border-color: var(--accent); color: var(--accent); }
+    .icon-btn:active { transform: scale(0.9); }
     
-    input[type="range"] { width: 100%; margin-top: 10px; accent-color: var(--accent); }
-    .text-input, textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; }
-    .text-input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-    .spend-input { border: none; border-bottom: 1px solid var(--border); background: transparent; font-size: 20px; font-weight: 700; width: 100px; color: var(--text); outline: none; }
+    /* Range & Input Glowing Focus States */
+    input[type="range"] { width: 100%; margin-top: 10px; accent-color: var(--accent); transition: transform 0.2s; cursor: pointer; }
+    input[type="range"]:active { transform: scale(1.02); }
     
-    progress { width: 100%; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    progress::-webkit-progress-bar { background-color: var(--subtle); }
-    progress::-webkit-progress-value { background-color: var(--accent); }
+    .text-input, textarea, .spend-input { 
+      border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none;
+      transition: all 0.3s ease; font-family: inherit; 
+    }
+    .text-input, textarea { width: 100%; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+    .spend-input { border: none; border-bottom: 2px solid var(--border); background: transparent; font-size: 22px; font-weight: 700; width: 100px; }
     
-    .theme-picker { position: absolute; right: 0; top: 42px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; width: 190px; z-index: 10; box-shadow: 0 6px 20px rgba(0,0,0,0.12); display: none; }
+    .text-input:focus, textarea:focus, .spend-input:focus { 
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.2); 
+    }
+    .spend-input:focus { box-shadow: none; border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
+    
+    /* Animated Progress Bar */
+    .progress-track { width: 100%; height: 8px; background: var(--subtle); border-radius: 6px; overflow: hidden; margin-top: 12px; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    
+    /* Mood Button Animations */
+    .mood-btn {
+      font-size: 24px; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; 
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .mood-btn.selected { 
+      border: 2px solid var(--accent); background: var(--subtle); transform: scale(1.15) translateY(-4px); 
+      box-shadow: 0 8px 16px rgba(217, 164, 65, 0.2); opacity: 1; 
+    }
+    .mood-btn.unselected { border: 1px solid var(--border); background: var(--card); opacity: 0.4; }
+    .mood-btn.unselected:hover { opacity: 0.8; transform: scale(1.05); }
+
+    /* Primary Save Button */
+    .primary-btn {
+      background: var(--accent); color: #fff; border: none; border-radius: 14px; padding: 14px 28px; 
+      font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; 
+      display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 24px rgba(217, 164, 65, 0.3);
+    }
+    .primary-btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 32px rgba(217, 164, 65, 0.4); }
+    .primary-btn:active { transform: scale(0.95); box-shadow: 0 4px 12px rgba(217, 164, 65, 0.2); }
+    
+    .theme-picker { position: absolute; right: 0; top: 42px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; width: 200px; z-index: 10; box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(-10px); pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .theme-picker.active { opacity: 1; transform: translateY(0); pointer-events: all; }
     
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Bulletproof Modal Styles */
+    /* Modal Animation */
     .overlay-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
-      z-index: 9998; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0.3s;
+      background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+      z-index: 9998; visibility: hidden; opacity: 0; transition: opacity 0.4s ease, visibility 0.4s;
     }
     .overlay-backdrop.active { visibility: visible; opacity: 1; }
 
     .save-modal {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -40%) scale(0.95);
-      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-      padding: 36px 24px; z-index: 9999; display: flex; flex-direction: column; align-items: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 85%; max-width: 340px;
-      visibility: hidden; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -30%) scale(0.9);
+      background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+      padding: 40px 32px; z-index: 9999; display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3); width: 85%; max-width: 360px;
+      visibility: hidden; opacity: 0; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .save-modal.active { visibility: visible; opacity: 1; transform: translate(-50%, -50%) scale(1); }
     
     .save-modal img { 
-      width: 100px; height: 100px; object-fit: contain; margin-bottom: 24px; border-radius: 16px;
+      width: 100px; height: 100px; object-fit: contain; margin-bottom: 24px; border-radius: 20px;
       animation: echoPulse 1.5s infinite; background: var(--bg);
     }
-    .save-modal h2 { font-size: 26px; margin: 0; color: var(--text); text-align: center; }
-    .save-modal p { font-size: 15px; color: var(--muted); margin-top: 10px; text-align: center; line-height: 1.4; }
+    .save-modal h2 { font-size: 28px; margin: 0; color: var(--text); text-align: center; letter-spacing: -0.5px; }
+    .save-modal p { font-size: 15px; color: var(--muted); margin-top: 12px; text-align: center; line-height: 1.5; }
 
     @keyframes echoPulse {
       0% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.6); }
-      70% { box-shadow: 0 0 0 24px rgba(217, 164, 65, 0); }
+      70% { box-shadow: 0 0 0 30px rgba(217, 164, 65, 0); }
       100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
     }
 
     @media (min-width: 768px) {
-      .container { max-width: 800px; }
-      .tracker-grid { grid-template-columns: repeat(3, 1fr); }
+      .container { max-width: 800px; padding-top: 20px; }
+      .tracker-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
       .card-full { grid-column: span 3; }
       .card-half-desktop { grid-column: span 1; }
     }
@@ -94,37 +169,37 @@
 </head>
 <body>
 
-  <!-- Animated Save Modal (Uses logo.jpg) -->
+  <!-- Animated Save Modal -->
   <div class="overlay-backdrop" id="overlay-backdrop"></div>
   <div class="save-modal" id="save-modal">
     <img src="logo.jpg" alt="Echo Logo" id="modal-logo">
-    <h2 class="fraunces"> Safely echoed❤️ </h2>
+    <h2 class="fraunces">Loud & Clear</h2>
+    <p>Your daily progress has been safely echoed into your tracking log.</p>
   </div>
 
   <div class="container">
-    <!-- Main Header (Uses logo.png) -->
-    <div style="display: flex; align-items: center; margin-bottom: 28px; height: 40px;">
-      <img src="logo.png" alt="Echo Brand Logo" style="height: 40px; object-fit: contain; transform: scale(2.5); transform-origin: left center;">
+    <div style="display: flex; align-items: center; margin-bottom: 32px; height: 40px; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+      <img src="logo.png" alt="Echo Brand Logo" style="height: 40px; object-fit: contain; transform: scale(2.5); transform-origin: left center; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
     </div>
 
-    <div class="header-row">
+    <div class="header-row" style="animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
       <div>
-        <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;" id="date-display"></div>
-        <h1 class="fraunces" style="font-size: 27px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-          <i data-lucide="sparkles" id="title-icon" style="color: var(--accent);"></i> Today's Page
+        <div style="font-size: 14px; color: var(--muted); margin-bottom: 6px; font-weight: 500;" id="date-display"></div>
+        <h1 class="fraunces" style="font-size: 32px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
+          <i data-lucide="sparkles" id="title-icon" style="color: var(--accent); width: 28px; height: 28px; transition: transform 0.5s;"></i> Today's Page
         </h1>
       </div>
       <div style="position: relative;">
-        <button onclick="toggleThemePicker()" style="display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer;">
-          <i data-lucide="palette" style="color: var(--muted); width: 15px; height: 15px;"></i>
+        <button onclick="toggleThemePicker()" class="icon-btn" style="width: 44px; height: 44px; border-radius: 14px;">
+          <i data-lucide="palette" style="color: var(--text); width: 20px; height: 20px;"></i>
         </button>
         <div class="theme-picker" id="theme-picker">
-          <div style="display: flex; gap: 6px; margin-bottom: 10px;">
-            <button onclick="setTheme('light')" style="flex: 1; padding: 7px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text);">Light</button>
-            <button onclick="setTheme('dark')" style="flex: 1; padding: 7px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text);">Dark</button>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button onclick="setTheme('light')" style="flex: 1; padding: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text); font-weight: 600; transition: transform 0.2s;">Light</button>
+            <button onclick="setTheme('dark')" style="flex: 1; padding: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text); font-weight: 600; transition: transform 0.2s;">Dark</button>
           </div>
-          <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">Accent colour</div>
-          <input type="color" id="accent-color" onchange="setAccent(this.value)" style="width: 100%; height: 32px; border: none; cursor: pointer; background: none;">
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 500;">Accent colour</div>
+          <input type="color" id="accent-color" onchange="setAccent(this.value)" style="width: 100%; height: 36px; border: none; cursor: pointer; background: none; border-radius: 8px;">
         </div>
       </div>
     </div>
@@ -134,8 +209,8 @@
         <div class="card-header"><i data-lucide="droplet" style="color: #3A6EA5;"></i> Water</div>
         <div class="card-value"><span id="water-val">0</span><span class="card-subtext"> / 8 glasses</span></div>
         <div class="btn-row">
-          <button class="icon-btn" onclick="updateState('water', -1)"><i data-lucide="minus" style="width: 14px;"></i></button>
-          <button class="icon-btn" onclick="updateState('water', 1)"><i data-lucide="plus" style="width: 14px;"></i></button>
+          <button class="icon-btn" onclick="updateState('water', -1)"><i data-lucide="minus" style="width: 16px;"></i></button>
+          <button class="icon-btn" onclick="updateState('water', 1)"><i data-lucide="plus" style="width: 16px;"></i></button>
         </div>
       </div>
 
@@ -152,47 +227,49 @@
       </div>
 
       <div class="card card-half-desktop">
-        <div class="card-header"><span>📱</span> Screen time</div>
+        <div class="card-header"><i data-lucide="smartphone" style="color: #C75146;"></i> Screen time</div>
         <div class="card-value"><span id="screenHrs-val">0</span><span class="card-subtext"> hrs</span></div>
         <input type="range" id="screenHrs-range" min="0" max="14" step="0.5" oninput="updateRange('screenHrs', this.value)">
       </div>
 
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="footprints" style="color: #5A8A5F;"></i> Daily Steps</div>
-        <div style="display: flex; align-items: center; margin-top: 4px;">
-          <input type="number" id="steps-input" class="text-input" placeholder="0" oninput="updateSteps(this.value)" style="width: 100px; font-weight: 700; font-size: 18px;">
-          <span class="card-subtext" style="margin-left: 8px;">/ 10,000</span>
+        <div style="display: flex; align-items: center; margin-top: 8px;">
+          <input type="number" id="steps-input" class="text-input" placeholder="0" oninput="updateSteps(this.value)" style="width: 100px; font-weight: 700; font-size: 20px; padding: 6px 12px;">
+          <span class="card-subtext" style="margin-left: 10px;">/ 10,000</span>
         </div>
-        <progress id="steps-progress" value="0" max="10000"></progress>
+        <div class="progress-track">
+          <div class="progress-fill" id="steps-progress"></div>
+        </div>
       </div>
 
       <div class="card card-half-desktop">
         <div class="card-header"><i data-lucide="wallet" style="color: #C75146;"></i> Spent today</div>
-        <div style="display: flex; align-items: center; margin-top: 8px;">
-          <span style="font-size: 20px; font-weight: 700; margin-right: 4px;">₹</span>
+        <div style="display: flex; align-items: center; margin-top: 14px;">
+          <span style="font-size: 24px; font-weight: 700; margin-right: 8px; color: var(--muted);">₹</span>
           <input type="number" id="spend-input" class="spend-input" placeholder="0" oninput="updateInput('spend', this.value)">
         </div>
       </div>
 
       <div class="card card-full">
         <div class="card-header"><i data-lucide="smile" style="color: #7C9473;"></i> Mood</div>
-        <div style="display: flex; gap: 10px; margin-top: 8px;" id="mood-container"></div>
+        <div style="display: flex; gap: 14px; margin-top: 12px;" id="mood-container"></div>
       </div>
 
       <div class="card card-full">
-        <div class="card-header"><span>⭐</span> Rate the day</div>
+        <div class="card-header"><i data-lucide="star" style="color: var(--accent);"></i> Rate the day</div>
         <div class="card-value"><span id="dayRating-val">—</span><span class="card-subtext"> / 10</span></div>
         <input type="range" id="dayRating-range" min="1" max="10" step="1" oninput="updateRange('dayRating', this.value)">
       </div>
 
       <div class="card card-full">
-        <div class="card-header"><span>📝</span> Today, in a sentence</div>
-        <textarea id="note-input" rows="2" placeholder="One or two lines about how today actually went..." oninput="updateInput('note', this.value)"></textarea>
+        <div class="card-header"><i data-lucide="pen-line" style="color: var(--muted);"></i> Today, in a sentence</div>
+        <textarea id="note-input" rows="2" class="text-input" style="margin-top: 6px; resize: none;" placeholder="One or two lines about how today actually went..." oninput="updateInput('note', this.value)"></textarea>
       </div>
     </div>
 
-    <button onclick="saveAndExport()" id="save-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; transition: background 0.2s;">
-      <i data-lucide="download" style="width: 16px;"></i> Save today & update Excel
+    <button onclick="saveAndExport()" id="save-btn" class="primary-btn" style="animation: slideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px);">
+      <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save today & update Excel
     </button>
   </div>
 
@@ -219,6 +296,15 @@
       
       render();
       renderMoods();
+      
+      // Initial trigger for progress bar animation
+      setTimeout(() => updateSteps(state.steps || 0), 300);
+      
+      // Title Icon gentle rotate
+      setInterval(() => {
+        const icon = document.getElementById("title-icon");
+        icon.style.transform = icon.style.transform === "rotate(15deg) scale(1.1)" ? "rotate(0deg) scale(1)" : "rotate(15deg) scale(1.1)";
+      }, 3000);
     }
 
     function render() {
@@ -231,7 +317,6 @@
       document.getElementById("screenHrs-range").value = state.screenHrs;
       document.getElementById("spend-input").value = state.spend;
       document.getElementById("steps-input").value = state.steps || "";
-      document.getElementById("steps-progress").value = state.steps || 0;
       document.getElementById("dayRating-val").innerText = state.dayRating ?? "—";
       document.getElementById("dayRating-range").value = state.dayRating ?? 5;
       document.getElementById("note-input").value = state.note;
@@ -243,8 +328,12 @@
       MOODS.forEach((m, i) => {
         const btn = document.createElement("button");
         btn.innerText = m;
-        btn.style.cssText = `font-size: 22px; width: 42px; height: 42px; border-radius: 10px; cursor: pointer; border: ${state.mood === i ? '2px solid var(--accent)' : '1px solid var(--border)'}; background: ${state.mood === i ? 'var(--subtle)' : 'var(--card)'}; opacity: ${state.mood === null || state.mood === i ? 1 : 0.55};`;
-        btn.onclick = () => { state.mood = i; renderMoods(); };
+        // Apply smooth transition classes instead of inline styles
+        btn.className = `mood-btn ${state.mood === i ? 'selected' : (state.mood === null ? '' : 'unselected')}`;
+        btn.onclick = () => { 
+          state.mood = i; 
+          renderMoods(); 
+        };
         container.appendChild(btn);
       });
     }
@@ -252,12 +341,26 @@
     function updateState(key, change) { state[key] = Math.max(0, (state[key] || 0) + change); render(); }
     function updateRange(key, value) { state[key] = parseFloat(value); render(); }
     function updateInput(key, value) { state[key] = value; render(); }
-    function updateSteps(value) { state.steps = parseInt(value) || 0; document.getElementById("steps-progress").value = state.steps; }
+    
+    function updateSteps(value) { 
+      state.steps = parseInt(value) || 0; 
+      const percentage = Math.min(100, (state.steps / 10000) * 100);
+      document.getElementById("steps-progress").style.width = `${percentage}%`;
+    }
 
     function toggleThemePicker() {
       const p = document.getElementById("theme-picker");
-      p.style.display = p.style.display === "block" ? "none" : "block";
+      p.classList.toggle("active");
     }
+
+    // Close picker when clicking outside
+    document.addEventListener('click', function(event) {
+      const picker = document.getElementById("theme-picker");
+      const btn = picker.previousElementSibling;
+      if (!picker.contains(event.target) && !btn.contains(event.target)) {
+        picker.classList.remove("active");
+      }
+    });
 
     function setTheme(mode, save = true) {
       state.theme = mode;
@@ -269,11 +372,10 @@
       state.accent = color;
       document.documentElement.style.setProperty("--accent", color);
       document.getElementById("accent-color").value = color;
-      document.getElementById("title-icon").style.color = color;
       
       const rgb = hexToRgb(color);
       if (rgb) {
-        document.styleSheets[0].insertRule(`@keyframes echoPulse { 0% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6); } 70% { box-shadow: 0 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } 100% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } }`, document.styleSheets[0].cssRules.length);
+        document.styleSheets[0].insertRule(`@keyframes echoPulse { 0% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5); } 70% { box-shadow: 0 0 0 25px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } 100% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } }`, document.styleSheets[0].cssRules.length);
       }
       
       if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
@@ -287,7 +389,7 @@
 
     function saveAndExport() {
       const btn = document.getElementById("save-btn");
-      btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width: 16px;"></i> Echoing...`;
+      btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width: 20px; height: 20px;"></i> Echoing...`;
       lucide.createIcons();
       
       const payload = { ...state, date: todayKey };
@@ -306,9 +408,9 @@
           setTimeout(() => {
             backdrop.classList.remove("active");
             modal.classList.remove("active");
-            btn.innerHTML = `<i data-lucide="download" style="width: 16px;"></i> Save today & update Excel`;
+            btn.innerHTML = `<i data-lucide="download" style="width: 20px; height: 20px;"></i> Save today & update Excel`;
             lucide.createIcons();
-          }, 1200); 
+          }, 1400); 
         }, 1000); 
       });
     }
