@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Echo | Habit Tracker</title>
-   
-  <!-- Updated to logo.jpg -->
-  <link rel="icon" type="image/jpg" href="logojpg">
+  <title>Echo | Student Habit Tracker</title>
+  
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   
@@ -73,15 +72,15 @@
     .save-modal.active { visibility: visible; opacity: 1; transform: translate(-50%, -50%) scale(1); }
     
     .save-modal img { 
-      width: 64px; height: 64px; object-fit: contain; margin-bottom: 20px; border-radius: 12px;
+      width: 100px; height: 100px; object-fit: contain; margin-bottom: 24px; border-radius: 16px;
       animation: echoPulse 1.5s infinite; background: var(--bg);
     }
-    .save-modal h2 { font-size: 24px; margin: 0; color: var(--text); text-align: center; }
-    .save-modal p { font-size: 14px; color: var(--muted); margin-top: 10px; text-align: center; line-height: 1.4; }
+    .save-modal h2 { font-size: 26px; margin: 0; color: var(--text); text-align: center; }
+    .save-modal p { font-size: 15px; color: var(--muted); margin-top: 10px; text-align: center; line-height: 1.4; }
 
     @keyframes echoPulse {
       0% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.6); }
-      70% { box-shadow: 0 0 0 20px rgba(217, 164, 65, 0); }
+      70% { box-shadow: 0 0 0 24px rgba(217, 164, 65, 0); }
       100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
     }
 
@@ -99,12 +98,13 @@
   <div class="overlay-backdrop" id="overlay-backdrop"></div>
   <div class="save-modal" id="save-modal">
     <img src="logo.jpg" alt="Echo Logo" id="modal-logo">
-    <h2 class="fraunces">Safely echoed ❤️</h2>
+    <h2 class="fraunces">Loud & Clear</h2>
+    <p>Your daily progress has been safely echoed into your tracking log.</p>
   </div>
 
   <div class="container">
-    <div style="display: flex; align-items: center; margin-bottom: 24px;">
-      <img src="logo.jpg" alt="Echo Brand Logo" style="height: 48px; object-fit: contain;">
+    <div style="display: flex; align-items: center; margin-bottom: 28px;">
+      <img src="logo.jpg" alt="Echo Brand Logo" style="height: 80px; object-fit: contain;">
     </div>
 
     <div class="header-row">
@@ -273,7 +273,7 @@
       
       const rgb = hexToRgb(color);
       if (rgb) {
-        document.styleSheets[0].insertRule(`@keyframes echoPulse { 0% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } 100% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } }`, document.styleSheets[0].cssRules.length);
+        document.styleSheets[0].insertRule(`@keyframes echoPulse { 0% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6); } 70% { box-shadow: 0 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } 100% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } }`, document.styleSheets[0].cssRules.length);
       }
       
       if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
@@ -296,21 +296,20 @@
       const backdrop = document.getElementById("overlay-backdrop");
       const modal = document.getElementById("save-modal");
       
-      // Force DOM to update the animation BEFORE freezing to build Excel
       requestAnimationFrame(() => {
         backdrop.classList.add("active");
         modal.classList.add("active");
         
         setTimeout(() => {
-          buildExcel(); // Generates and downloads the file
+          buildExcel();
           
           setTimeout(() => {
             backdrop.classList.remove("active");
             modal.classList.remove("active");
             btn.innerHTML = `<i data-lucide="download" style="width: 16px;"></i> Save today & update Excel`;
             lucide.createIcons();
-          }, 1200); // Close modal after 1.2s
-        }, 1000); // Let modal pulse for 1s before Excel build
+          }, 1200); 
+        }, 1000); 
       });
     }
 
