@@ -1,15 +1,479 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ECHO | Habit Tracker </title>
-    <meta name="description" content="A daily habit tracker for students: water, sleep, study time, screen time, spending, steps, mood and to-dos, with automatic Excel export." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo | Habit Tracker</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="logo.png">
+  
+  <!-- Libraries (Icons & Excel Export) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --bg: #EDF1EA; --card: #FFFFFF; --text: #2B3A55; --muted: #7A8699; 
+      --border: #DDE3DE; --subtle: #F0F2ED; --accent: #D9A441;
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+    }
+    
+    [data-theme="dark"] {
+      --bg: #1B2333; --card: #263045; --text: #EDF1EA; --muted: #9AA6B8; 
+      --border: #3A4560; --subtle: #2E3A52;
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.2);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      min-height: 100vh; background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif; padding: 28px 20px 60px; 
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+    
+    .fraunces { font-family: 'Fraunces', serif; }
+    
+    .container { 
+      max-width: 800px; margin: 0 auto; 
+    }
+
+    /* --- Top Branding Logo --- */
+    .brand-header {
+      display: flex; align-items: center; margin-bottom: 32px; height: 40px;
+      animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .brand-header img {
+      height: 40px; object-fit: contain; transform: scale(2.5); 
+      transform-origin: left center; transition: transform 0.5s ease;
+    }
+
+    /* --- Interactive Header --- */
+    .header-row { 
+      display: flex; justify-content: space-between; align-items: flex-end; 
+      margin-bottom: 24px; position: relative; z-index: 100;
+      animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .date-text { font-size: 14px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .page-title { font-size: 32px; font-weight: 600; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+    
+    /* Theme Picker Dropdown */
+    .theme-picker-container { position: relative; }
+    .theme-picker { 
+      position: absolute; right: 0; top: calc(100% + 12px); background: var(--card); 
+      border: 1px solid var(--border); border-radius: 16px; padding: 16px; width: 200px; 
+      box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(-10px); 
+      pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    .theme-picker.active { opacity: 1; transform: translateY(0); pointer-events: all; }
+    
+    /* --- Grid & Cards --- */
+    .tracker-grid { 
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+      gap: 16px; position: relative; z-index: 1; 
+    }
+    .card-full { grid-column: 1 / -1; }
+    
+    .card { 
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; 
+      box-shadow: var(--shadow-sm); opacity: 0;
+      animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; 
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+    
+    /* Staggered load animation */
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.15s; }
+    .card:nth-child(3) { animation-delay: 0.2s; }
+    .card:nth-child(4) { animation-delay: 0.25s; }
+    .card:nth-child(5) { animation-delay: 0.3s; }
+    .card:nth-child(6) { animation-delay: 0.35s; }
+    .card:nth-child(7) { animation-delay: 0.4s; }
+    .card:nth-child(8) { animation-delay: 0.45s; }
+    .card:nth-child(9) { animation-delay: 0.5s; }
+    
+    .card-header { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+    .card-header i { transition: transform 0.4s ease; }
+    .card:hover .card-header i { transform: scale(1.2) rotate(5deg); }
+    
+    .card-value { font-size: 26px; font-weight: 700; margin: 4px 0; color: var(--text); }
+    .card-subtext { font-size: 13px; font-weight: 500; color: var(--muted); }
+    
+    /* --- Interactive Elements --- */
+    .icon-btn { 
+      width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); 
+      background: var(--subtle); display: flex; align-items: center; justify-content: center; 
+      cursor: pointer; color: var(--text); transition: all 0.2s ease; 
+    }
+    .icon-btn:hover { background: var(--card); border-color: var(--accent); color: var(--accent); transform: scale(1.1); }
+    .icon-btn:active { transform: scale(0.95); }
+    
+    input[type="range"] { width: 100%; margin-top: 12px; accent-color: var(--accent); cursor: pointer; }
+    
+    .text-input, textarea, .spend-input { 
+      border: 1px solid var(--border); background: var(--bg); color: var(--text); 
+      outline: none; transition: all 0.3s ease; font-family: inherit; border-radius: 10px; 
+    }
+    .text-input, textarea { width: 100%; padding: 12px; font-size: 14px; }
+    .text-input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.15); }
+    
+    .spend-input { 
+      border: none; border-bottom: 2px solid var(--border); border-radius: 0; background: transparent; 
+      font-size: 24px; font-weight: 700; width: 120px; padding: 4px 0;
+    }
+    .spend-input:focus { border-color: var(--accent); }
+    
+    .progress-track { width: 100%; height: 8px; background: var(--subtle); border-radius: 6px; overflow: hidden; margin-top: 12px; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    
+    .mood-btn {
+      font-size: 26px; width: 48px; height: 48px; border-radius: 14px; cursor: pointer; 
+      display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);
+      background: var(--card); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .mood-btn.selected { 
+      border: 2px solid var(--accent); background: var(--subtle); transform: scale(1.15) translateY(-4px); 
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1); opacity: 1; 
+    }
+    .mood-btn.unselected { opacity: 0.5; }
+    .mood-btn.unselected:hover { opacity: 0.9; transform: scale(1.05); }
+
+    /* --- Primary Action Button --- */
+    .primary-btn {
+      background: var(--accent); color: #fff; border: none; border-radius: 14px; padding: 16px 28px; 
+      font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; max-width: 320px; margin: 32px auto 0;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(217, 164, 65, 0.3);
+      opacity: 0; animation: slideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.6s;
+    }
+    .primary-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(217, 164, 65, 0.4); }
+    
+    /* --- Animations --- */
+    @keyframes slideUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes slideDown { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes echoPulse {
+      0% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.5); }
+      70% { box-shadow: 0 0 0 30px rgba(217, 164, 65, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
+    }
+
+    /* --- Save Modal Overlay --- */
+    .overlay-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px);
+      z-index: 9998; visibility: hidden; opacity: 0; transition: opacity 0.4s ease;
+    }
+    .save-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -40%) scale(0.9);
+      background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+      padding: 40px 32px; z-index: 9999; display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3); width: 85%; max-width: 360px;
+      visibility: hidden; opacity: 0; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .overlay-backdrop.active, .save-modal.active { visibility: visible; opacity: 1; }
+    .save-modal.active { transform: translate(-50%, -50%) scale(1); }
+    
+    .save-modal img { 
+      width: 100px; height: 100px; object-fit: contain; margin-bottom: 24px; border-radius: 20px;
+      animation: echoPulse 1.5s infinite; background: var(--bg);
+    }
+    .save-modal h2 { font-size: 28px; margin: 0 0 12px; color: var(--text); letter-spacing: -0.5px; }
+    .save-modal p { font-size: 15px; color: var(--muted); text-align: center; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- Modal Overlay (Uses logo.jpg) -->
+  <div class="overlay-backdrop" id="overlay-backdrop"></div>
+  <div class="save-modal" id="save-modal">
+    <img src="logo.jpg" alt="Echo Logo" id="modal-logo">
+    <h2 class="fraunces">Safely Echoed ❤️</h2>
+  </div>
+
+  <div class="container">
+    
+    <!-- Top Branding (Uses logo.png) -->
+    <div class="brand-header">
+      <img src="logo.png" alt="Echo Brand Logo">
+    </div>
+
+    <!-- Header & Theme Picker -->
+    <div class="header-row">
+      <div class="header-text-container">
+        <div class="date-text" id="date-display"></div>
+        <h1 class="page-title fraunces">
+          <i data-lucide="sparkles" id="title-icon" style="color: var(--accent); width: 28px; height: 28px;"></i> 
+          Today's Page
+        </h1>
+      </div>
+      
+      <div class="theme-picker-container">
+        <button onclick="toggleThemePicker()" class="icon-btn" style="width: 44px; height: 44px; border-radius: 12px;">
+          <i data-lucide="palette" style="width: 20px; height: 20px;"></i>
+        </button>
+        
+        <div class="theme-picker" id="theme-picker">
+          <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button onclick="setTheme('light')" style="flex: 1; padding: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text); font-weight: 600;">Light</button>
+            <button onclick="setTheme('dark')" style="flex: 1; padding: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--subtle); cursor: pointer; color: var(--text); font-weight: 600;">Dark</button>
+          </div>
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600;">Accent colour</div>
+          <input type="color" id="accent-color" onchange="setAccent(this.value)" style="width: 100%; height: 36px; border: none; cursor: pointer; background: none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracker Grid -->
+    <div class="tracker-grid">
+      <!-- Water -->
+      <div class="card">
+        <div class="card-header"><i data-lucide="droplet" style="color: #3A6EA5;"></i> Water</div>
+        <div class="card-value"><span id="water-val">0</span><span class="card-subtext"> / 8 glasses</span></div>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="icon-btn" onclick="updateState('water', -1)"><i data-lucide="minus" style="width: 16px;"></i></button>
+          <button class="icon-btn" onclick="updateState('water', 1)"><i data-lucide="plus" style="width: 16px;"></i></button>
+        </div>
+      </div>
+
+      <!-- Sleep -->
+      <div class="card">
+        <div class="card-header"><i data-lucide="moon" style="color: #6B5CA5;"></i> Sleep</div>
+        <div class="card-value"><span id="sleep-val">0</span><span class="card-subtext"> hrs</span></div>
+        <input type="range" id="sleep-range" min="0" max="12" step="0.5" oninput="updateRange('sleep', this.value)">
+      </div>
+
+      <!-- Study Time -->
+      <div class="card">
+        <div class="card-header"><i data-lucide="book-open" style="color: #8A6D3B;"></i> Study time</div>
+        <div class="card-value"><span id="studyHrs-val">0</span><span class="card-subtext"> hrs</span></div>
+        <input type="range" id="studyHrs-range" min="0" max="10" step="0.5" oninput="updateRange('studyHrs', this.value)">
+      </div>
+
+      <!-- Screen Time -->
+      <div class="card">
+        <div class="card-header"><i data-lucide="smartphone" style="color: #C75146;"></i> Screen time</div>
+        <div class="card-value"><span id="screenHrs-val">0</span><span class="card-subtext"> hrs</span></div>
+        <input type="range" id="screenHrs-range" min="0" max="14" step="0.5" oninput="updateRange('screenHrs', this.value)">
+      </div>
+
+      <!-- Steps -->
+      <div class="card">
+        <div class="card-header"><i data-lucide="footprints" style="color: #5A8A5F;"></i> Daily Steps</div>
+        <div style="display: flex; align-items: center; margin-top: 8px;">
+          <input type="number" id="steps-input" class="text-input" placeholder="0" oninput="updateSteps(this.value)" style="width: 110px; font-weight: 700; font-size: 20px; padding: 8px 12px;">
+          <span class="card-subtext" style="margin-left: 10px;">/ 10,000</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="steps-progress"></div>
+        </div>
+      </div>
+
+      <!-- Spend -->
+      <div class="card">
+        <div class="card-header"><i data-lucide="wallet" style="color: #C75146;"></i> Spent today</div>
+        <div style="display: flex; align-items: center; margin-top: 14px;">
+          <span style="font-size: 26px; font-weight: 700; margin-right: 8px; color: var(--muted);">₹</span>
+          <input type="number" id="spend-input" class="spend-input" placeholder="0" oninput="updateInput('spend', this.value)">
+        </div>
+      </div>
+
+      <!-- Mood -->
+      <div class="card card-full">
+        <div class="card-header"><i data-lucide="smile" style="color: #7C9473;"></i> Mood</div>
+        <div style="display: flex; gap: 16px; margin-top: 12px;" id="mood-container"></div>
+      </div>
+
+      <!-- Rate the Day -->
+      <div class="card card-full">
+        <div class="card-header"><i data-lucide="star" style="color: var(--accent);"></i> Rate the day</div>
+        <div class="card-value"><span id="dayRating-val">—</span><span class="card-subtext"> / 10</span></div>
+        <input type="range" id="dayRating-range" min="1" max="10" step="1" oninput="updateRange('dayRating', this.value)">
+      </div>
+
+      <!-- Notes -->
+      <div class="card card-full">
+        <div class="card-header"><i data-lucide="pen-line" style="color: var(--muted);"></i> Today, in a sentence</div>
+        <textarea id="note-input" rows="2" class="text-input" style="margin-top: 8px; resize: none;" placeholder="One or two lines about how today actually went..." oninput="updateInput('note', this.value)"></textarea>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <button onclick="saveAndExport()" id="save-btn" class="primary-btn">
+      <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save today & update Excel
+    </button>
+  </div>
+
+  <script>
+    const MOODS = ["😞", "😐", "🙂", "😄"];
+    let state = {
+      water: 0, sleep: 0, studyHrs: 0, screenHrs: 0, spend: "", 
+      steps: 0, mood: null, dayRating: null, note: "",
+      theme: "light", accent: "#D9A441"
+    };
+
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    function init() {
+      lucide.createIcons();
+      document.getElementById("date-display").innerText = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+      
+      const savedTheme = JSON.parse(localStorage.getItem("prefs:theme") || "{}");
+      if(savedTheme.mode) setTheme(savedTheme.mode, false);
+      if(savedTheme.accent) setAccent(savedTheme.accent, false);
+
+      const savedData = JSON.parse(localStorage.getItem(`entries:${todayKey}`) || "{}");
+      state = { ...state, ...savedData };
+      
+      render();
+      renderMoods();
+      
+      // Delay progress bar for initial animation effect
+      setTimeout(() => updateSteps(state.steps || 0), 400);
+      
+      // Gentle rotate animation for title icon
+      setInterval(() => {
+        const icon = document.getElementById("title-icon");
+        icon.style.transform = icon.style.transform === "rotate(12deg) scale(1.15)" ? "rotate(0deg) scale(1)" : "rotate(12deg) scale(1.15)";
+      }, 4000);
+    }
+
+    function render() {
+      document.getElementById("water-val").innerText = state.water;
+      document.getElementById("sleep-val").innerText = state.sleep;
+      document.getElementById("sleep-range").value = state.sleep;
+      document.getElementById("studyHrs-val").innerText = state.studyHrs;
+      document.getElementById("studyHrs-range").value = state.studyHrs;
+      document.getElementById("screenHrs-val").innerText = state.screenHrs;
+      document.getElementById("screenHrs-range").value = state.screenHrs;
+      document.getElementById("spend-input").value = state.spend;
+      document.getElementById("steps-input").value = state.steps || "";
+      document.getElementById("dayRating-val").innerText = state.dayRating ?? "—";
+      document.getElementById("dayRating-range").value = state.dayRating ?? 5;
+      document.getElementById("note-input").value = state.note;
+    }
+
+    function renderMoods() {
+      const container = document.getElementById("mood-container");
+      container.innerHTML = "";
+      MOODS.forEach((m, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = m;
+        btn.className = `mood-btn ${state.mood === i ? 'selected' : (state.mood === null ? '' : 'unselected')}`;
+        btn.onclick = () => { state.mood = i; renderMoods(); };
+        container.appendChild(btn);
+      });
+    }
+
+    function updateState(key, change) { state[key] = Math.max(0, (state[key] || 0) + change); render(); }
+    function updateRange(key, value) { state[key] = parseFloat(value); render(); }
+    function updateInput(key, value) { state[key] = value; render(); }
+    
+    function updateSteps(value) { 
+      state.steps = parseInt(value) || 0; 
+      const percentage = Math.min(100, (state.steps / 10000) * 100);
+      document.getElementById("steps-progress").style.width = `${percentage}%`;
+    }
+
+    function toggleThemePicker() {
+      document.getElementById("theme-picker").classList.toggle("active");
+    }
+
+    // Close theme picker when clicking outside
+    document.addEventListener('click', function(event) {
+      const picker = document.getElementById("theme-picker");
+      const container = document.querySelector('.theme-picker-container');
+      if (!container.contains(event.target)) {
+        picker.classList.remove("active");
+      }
+    });
+
+    function setTheme(mode, save = true) {
+      state.theme = mode;
+      document.body.setAttribute("data-theme", mode);
+      if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
+    }
+
+    function setAccent(color, save = true) {
+      state.accent = color;
+      document.documentElement.style.setProperty("--accent", color);
+      document.getElementById("accent-color").value = color;
+      
+      const rgb = hexToRgb(color);
+      if (rgb) {
+        document.styleSheets[0].insertRule(`@keyframes echoPulse { 0% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5); } 70% { box-shadow: 0 0 0 25px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } 100% { box-shadow: 0 0 0 0 rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0); } }`, document.styleSheets[0].cssRules.length);
+      }
+      
+      if (save) localStorage.setItem("prefs:theme", JSON.stringify({ mode: state.theme, accent: state.accent }));
+      renderMoods();
+    }
+
+    function hexToRgb(hex) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+    }
+
+    function saveAndExport() {
+      const btn = document.getElementById("save-btn");
+      btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width: 20px; height: 20px;"></i> Echoing...`;
+      lucide.createIcons();
+      
+      const payload = { ...state, date: todayKey };
+      localStorage.setItem(`entries:${todayKey}`, JSON.stringify(payload));
+
+      const backdrop = document.getElementById("overlay-backdrop");
+      const modal = document.getElementById("save-modal");
+      
+      requestAnimationFrame(() => {
+        backdrop.classList.add("active");
+        modal.classList.add("active");
+        
+        setTimeout(() => {
+          buildExcel();
+          
+          setTimeout(() => {
+            backdrop.classList.remove("active");
+            modal.classList.remove("active");
+            btn.innerHTML = `<i data-lucide="download" style="width: 20px; height: 20px;"></i> Save today & update Excel`;
+            lucide.createIcons();
+          }, 1400); 
+        }, 1000); 
+      });
+    }
+
+    function buildExcel() {
+      const rows = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith("entries:")) {
+          const d = JSON.parse(localStorage.getItem(key));
+          rows.push({
+            Date: d.date,
+            "Water (glasses)": d.water,
+            "Sleep (hrs)": d.sleep,
+            "Steps": d.steps || 0,
+            "Spent (₹)": d.spend,
+            "Study (hrs)": d.studyHrs,
+            "Screen time (hrs)": d.screenHrs,
+            "Mood": d.mood != null ? MOODS[d.mood] : "",
+            "Day rating (/10)": d.dayRating ?? "",
+            "Note": d.note ?? ""
+          });
+        }
+      }
+      rows.sort((a, b) => (a.Date > b.Date ? 1 : -1));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Echo Log");
+      XLSX.writeFile(wb, "echo-habit-log.xlsx");
+    }
+
+    window.onload = init;
+  </script>
+</body>
 </html>
