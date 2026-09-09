@@ -301,7 +301,7 @@
             "Note": d.note ?? ""
           });
         }
-      }
+      } 
       rows.sort((a, b) => (a.Date > b.Date ? 1 : -1));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
